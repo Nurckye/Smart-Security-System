@@ -32,7 +32,7 @@ myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 mydb = myclient["UsersAndLogs"]
 Users = mydb["Users"]
 Logs = mydb["Logs"]
-ser = serial.Serial('COM5', 9600, timeout=0)
+ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=0)
 while True:
         RaduLCD.printOnLCD("Apropiati cardul","de cititor")
         cod_rfid = str(ser.readline())
