@@ -33,25 +33,37 @@ mydb = myclient["UsersAndLogs"]
 Users = mydb["Users"]
 Logs = mydb["Logs"]
 ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=0)
+ok = 1
 while True:
-        RaduLCD.printOnLCD("Apropiati cardul","de cititor")
+        if ok == 1:
+            RaduLCD.printOnLCD("Apropiati cardul","de cititor")
+            ok = 0
         cod_rfid = str(ser.readline())
-        cod_rfid = cod_rfid[3:14];
-        if len(cod_rfid) > 2: #Daca ia codul rfid
+        cod_rfid = cod_rfid[3:14]
+        print(cod_rfid)
+        if len(cod_rfid)>2:
             time.sleep(1)
             myquery = { "RFID": cod_rfid }
+            print(myquery)
             rezultate_cautare = Users.find_one(myquery)
+            print(rezultate_cautare)
             if rezultate_cautare != None:
-                RaduLCD.printOnLCD("Asezati-va in","fata camerei")
+                print(rezultate_cautare)
+                RaduLCD.printOnLCD("Asezati-va in","fata camerei!")
+                ok = 1
                 time.sleep(2)
                 cap = cv2.VideoCapture(0)
                 face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-                while(True):
+                timp_start =  time.localtime(time.time())
+                minutul_inceperii = timp_start.tm_min
+                RaduLCD.printOnLCD("Cautare fata..."," ")
+                while(minutul_inceperii + 2 >= time.localtime(time.time()).tm_min):
                     ret, img = cap.read() #ia cate un frame pe rand
                     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # face imaginea grayscale
                     faces = face_cascade.detectMultiScale(gray,scaleFactor = 1.05, minNeighbors=5) #primeste coordonatele fetelor si lungimile
-                    RaduLCD.printOnLCD("Cautare fata...","")
-                    if len(faces) != 0: #IFUL CU LUAREA POZEI, Upload in LOG, deschidere usa
+
+                    #IFUL CU LUAREA POZEI, Upload in LOG, deschidere usa
+                    if len(faces) != 0:
                         localtime = time.localtime(time.time())
                         data_pozei = get_time(localtime)
                         numele_pozei = data_pozei + '.jpg'
@@ -67,9 +79,13 @@ while True:
                         "Fotografie":poza_binar
                         }
                         inserat = Logs.insert_one(intrare_logs)
+                        time.sleep(3)
+                        RaduLCD.printOnLCD("Bun Venit",rezultate_cautare["Nume"][0] + ". " + rezultate_cautare["Prenume"])
+                        time.sleep(3)
                         break
                 cap.release()
                 cv2.destroyAllWindows()
             else:
                 RaduLCD.printOnLCD("Acces respins!","") #printurile sunt pe LCD 16x2. A se verifica nr de caractere pt fiecare rand
                 time.sleep(3)
+                ok = 1
